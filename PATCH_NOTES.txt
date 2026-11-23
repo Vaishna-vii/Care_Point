@@ -1,0 +1,39 @@
+CAREPOINT PROJECT PATCH NOTES
+
+1. LOCATION HIERARCHY
+- Added GET /api/directory/hierarchy.
+- Reads the existing normalized state -> district -> dispensary relationships.
+- Returns a nested state/district/dispensary structure without creating duplicate geographic tables.
+- Search supports dispensary name, district/city name, area/address, PIN code, provider type, state and district.
+- Frontend directory now displays expandable State > District/City > Dispensary groups and an address/area column.
+- District is used as the city-level grouping because the current database has no separate city table. Area/locality is searched within the existing dispensary address field.
+
+2. APPOINTMENT REQUESTS
+- Replaced browser prompt-based appointment submission with an inline form.
+- Form validates date, time slot and selected dispensary.
+- Backend verifies dispensary existence and optional service mapping before inserting a pending appointment.
+- Admin confirm/reject now runs transactionally, checks dispensary scope and writes an audit record.
+
+3. MEDICINE REQUEST APPROVAL / REJECTION
+- Fixed audit insert to match the actual audit_log schema exported from the user's MySQL database.
+- The existing table has admin_id, action_type, entity_type, entity_id, details, ip_address and created_at; it does NOT have actor_role or dispensary_id.
+- Actor role and dispensary scope are always retained inside the JSON details field; the helper also detects and populates actor_role / dispensary_id if those columns have already been added.
+- Approval/rejection/dispensing use scoped, transactional updates and provide more useful backend errors.
+
+4. ADMIN INVENTORY
+- Fixed the medicine dropdown data loading: the frontend previously declared a medicines state but never fetched the options.
+
+5. SECURITY / DATA
+- No existing table is dropped or renamed.
+- No existing government dataset rows are changed.
+- No credentials or .env files are included in this ZIP.
+- Copy backend/.env.example to backend/.env and enter local credentials.
+
+VALIDATION
+- All backend JavaScript source files pass `node --check`.
+- A live MySQL integration test and Windows frontend build were not possible in this environment. Run the application against the user's local MySQL database to verify the actual schema and workflows.
+
+6. OPTIONAL INDIA STATE MASTER LIST
+- Added backend/sql/optional_seed_india_states.sql to fill missing Indian State/UT names in the existing state master table.
+- It is safe to rerun and does not fabricate district/city or dispensary records.
+- Existing imported dataset coverage remains limited to the districts and dispensaries actually present in the database. States without imported facilities will correctly show zero results until real district/provider records are imported.
